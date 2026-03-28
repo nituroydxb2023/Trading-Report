@@ -1,0 +1,5 @@
+{
+  "name": "Trading Report",
+  "description": "Real-time trading profit and loss log with advanced analytics and admin notifications.",
+  "requestFramePermissions": []
+}

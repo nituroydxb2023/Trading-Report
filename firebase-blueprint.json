@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "Trade": {
+      "title": "Trade",
+      "description": "A single trading log entry.",
+      "type": "object",
+      "properties": {
+        "symbol": { "type": "string", "description": "Trading pair or symbol (e.g. BTC/USDT)" },
+        "type": { "type": "string", "enum": ["Long", "Short"], "description": "Trade direction" },
+        "quantity": { "type": "number", "description": "Quantity of the asset" },
+        "entryPrice": { "type": "number", "description": "Entry price" },
+        "exitPrice": { "type": "number", "description": "Exit price" },
+        "profit": { "type": "number", "description": "Profit or loss amount" },
+        "percentage": { "type": "number", "description": "Profit or loss percentage" },
+        "status": { "type": "string", "enum": ["Open", "Closed"], "description": "Trade status" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Time of the trade" },
+        "notes": { "type": "string", "description": "Optional notes" }
+      },
+      "required": ["symbol", "type", "profit", "timestamp", "status"]
+    },
+    "Profile": {
+      "title": "Profile",
+      "description": "Trader's profile and aggregate stats.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Trader's name" },
+        "totalProfit": { "type": "number", "description": "Total accumulated profit/loss" },
+        "winRate": { "type": "number", "description": "Win rate percentage" },
+        "totalTrades": { "type": "integer", "description": "Total number of trades" },
+        "lastUpdated": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+      },
+      "required": ["name", "totalProfit"]
+    }
+  },
+  "firestore": {
+    "/trades": {
+      "schema": "Trade",
+      "description": "Collection of all trades."
+    },
+    "/profiles/{profileId}": {
+      "schema": "Profile",
+      "description": "Trader profile information."
+    }
+  }
+}

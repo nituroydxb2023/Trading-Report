@@ -1,0 +1,96 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: trades
+// Document ID: auto-generated
+// Fields:
+//   - symbol: string (required)
+//   - type: string (required, 'Long' or 'Short')
+//   - entryPrice: number (optional)
+//   - exitPrice: number (optional)
+//   - profit: number (required)
+//   - percentage: number (optional)
+//   - status: string (required, 'Open' or 'Closed')
+//   - timestamp: timestamp (required)
+//   - notes: string (optional)
+//
+// Collection: profiles
+// Document ID: profileId (e.g. 'main')
+// Fields:
+//   - name: string (required)
+//   - totalProfit: number (required)
+//   - winRate: number (optional)
+//   - totalTrades: number (optional)
+//   - lastUpdated: timestamp (optional)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "nituroydxb2023@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidTrade(data) {
+      return data.keys().hasAll(['symbol', 'type', 'profit', 'timestamp', 'status']) &&
+             data.symbol is string && data.symbol.size() > 0 && data.symbol.size() < 50 &&
+             data.type in ['Long', 'Short'] &&
+             data.profit is number &&
+             data.status in ['Open', 'Closed'] &&
+             data.timestamp is timestamp &&
+             (!('quantity' in data) || data.quantity is number) &&
+             (!('entryPrice' in data) || data.entryPrice is number) &&
+             (!('exitPrice' in data) || data.exitPrice is number);
+    }
+
+    function isValidProfile(data) {
+      return data.keys().hasAll(['name', 'totalProfit']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.totalProfit is number;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /trades/{tradeId} {
+      // Only authenticated users can read trades
+      allow read: if isAuthenticated();
+      
+      // Only admin can create/update/delete trades
+      allow create: if isAdmin() && isValidTrade(request.resource.data);
+      allow update: if isAdmin() && isValidTrade(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /profiles/{profileId} {
+      // Only authenticated users can read profile
+      allow read: if isAuthenticated();
+      
+      // Only admin can update profile
+      allow write: if isAdmin() && isValidProfile(request.resource.data);
+    }
+
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      // Admin can read all users
+      allow read: if isAdmin();
+      // Only admin can write to users (to set roles)
+      allow write: if isAdmin();
+    }
+  }
+}
